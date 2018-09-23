@@ -255,6 +255,7 @@ class Sim(BaseCommand):
             return
 
         #TODO: this logic should be in a pilot or modle handler part.
+        print("model type: ", args.type)
         if args.type == "categorical":
             kl = KerasCategorical()
         elif args.type == "linear":
