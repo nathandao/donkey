@@ -131,9 +131,58 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
             max_loop_count=cfg.MAX_LOOPS)
 
 
+def train(cfg, tub_names, new_model_path, base_model_path=None, modelType="linear"):
+    # TODO add modelType-option also to drive-mode
+    print("Train a model of type: ", modelType)
+
+    if modelType == "categorical":
+        train_categorical(cfg, tub_names, new_model_path, base_model_path)
+    elif modelType == "linear":
+        train_linear(cfg, tub_names, new_model_path, base_model_path)
+    else:
+        print("didn't recognise type:", modelType)
+        return
 
 
-def train(cfg, tub_names, new_model_path, base_model_path=None, modelType="categorical"):
+# From dev-branch:
+def train_linear(cfg, tub_names, new_model_path, base_model_path=None):
+    """
+    use the specified data in tub_names to train an artifical neural network
+    saves the output trained model as model_name
+    """
+    X_keys = ['cam/image_array']
+    y_keys = ['user/angle', 'user/throttle']
+
+    new_model_path = os.path.expanduser(new_model_path)
+
+    kl = KerasLinear()
+    if base_model_path is not None:
+        base_model_path = os.path.expanduser(base_model_path)
+        kl.load(base_model_path)
+
+    print('tub_names', tub_names)
+    if not tub_names:
+        tub_names = os.path.join(cfg.DATA_PATH, '*')
+    tubgroup = TubGroup(tub_names)
+    train_gen, val_gen = tubgroup.get_train_val_gen(X_keys, y_keys,
+                                                    batch_size=cfg.BATCH_SIZE,
+                                                    train_frac=cfg.TRAIN_TEST_SPLIT)
+
+    total_records = len(tubgroup.df)
+    total_train = int(total_records * cfg.TRAIN_TEST_SPLIT)
+    total_val = total_records - total_train
+    print('train: %d, validation: %d' % (total_train, total_val))
+    steps_per_epoch = total_train // cfg.BATCH_SIZE
+    print('steps_per_epoch', steps_per_epoch)
+
+    kl.train(train_gen,
+             val_gen,
+             saved_model_path=new_model_path,
+             steps=steps_per_epoch,
+             train_split=cfg.TRAIN_TEST_SPLIT)
+
+# from master-branch
+def train_categorical(cfg, tub_names, new_model_path, base_model_path=None):
     """
     use the specified data in tub_names to train an artifical neural network
     saves the output trained model as model_name
@@ -153,19 +202,8 @@ def train(cfg, tub_names, new_model_path, base_model_path=None, modelType="categ
 
     new_model_path = os.path.expanduser(new_model_path)
 
-    print("Train a model of type: ", modelType)
-    #TODO add modelType-option also to drive-mode
-    if modelType == "categorical":
-        kl = KerasCategorical()
-    elif modelType == "linear":
-        #kl = KerasLinear(num_outputs=2)
-        #kl = KerasLinear(num_outputs=16)
-        kl = KerasLinear()
-    else:
-        print("didn't recognise type:", modelType)
-        return
+    kl = KerasCategorical()
 
-    #kl = KerasCategorical()
     if base_model_path is not None:
         base_model_path = os.path.expanduser(base_model_path)
         kl.load(base_model_path)
