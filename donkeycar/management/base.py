@@ -259,7 +259,8 @@ class Sim(BaseCommand):
         if args.type == "categorical":
             kl = KerasCategorical()
         elif args.type == "linear":
-            kl = KerasLinear(num_outputs=2)
+            #kl = KerasLinear(num_outputs=2)
+            kl = KerasLinear()
         else:
             print("didn't recognice type:", args.type)
             return
