@@ -28,7 +28,7 @@ from donkeycar.parts.controller import LocalWebController, JoystickController
 from donkeycar.parts.clock import Timestamp
 
 
-def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
+def drive(cfg, model_path=None, use_joystick=False, use_chaos=False, model_type='linear'):
     """
     Construct a working robotic vehicle from many parts.
     Each part runs as a job in the Vehicle loop, calling either
@@ -74,7 +74,13 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
                                 outputs=['run_pilot'])
 
     # Run the pilot if the mode is not user.
-    kl = KerasCategorical()
+    print("Using a model of type: ", model_type)
+    if model_type == "categorical":
+        kl = KerasCategorical()
+    elif model_type == "linear":
+        kl = KerasLinear()
+    #kl = KerasCategorical()
+
     if model_path:
         kl.load(model_path)
 
@@ -133,7 +139,6 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
 
 
 def train(cfg, tub_names, new_model_path, base_model_path=None, modelType="linear"):
-    # TODO add modelType-option also to drive-mode
     print("Train a model of type: ", modelType)
 
     if modelType == "categorical":
@@ -238,7 +243,7 @@ if __name__ == '__main__':
     cfg = dk.load_config()
 
     if args['drive']:
-        drive(cfg, model_path = args['--model'], use_joystick=args['--js'], use_chaos=args['--chaos'])
+        drive(cfg, model_path = args['--model'], use_joystick=args['--js'], use_chaos=args['--chaos'], model_type=args['--type'])
 
     elif args['train']:
         tub = args['--tub']
