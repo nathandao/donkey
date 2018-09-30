@@ -3,12 +3,12 @@
 Cross validator
 
 Usage:
-    crossvalidator.py  (--model=<model>) [--tub=<tub1,tub2,..tubn>]
+    crossvalidator.py  (--model=<model>) [--tub=<tub1,tub2,..tubn>] [--type=(linear|categorical)]
 
 Options:
     -h --help        Show this screen.
     --tub TUBPATHS   List of paths to tubs. Comma separated. Use quotes to use wildcards. ie "~/tubs/*"
-    --type           Either categorical or linear  [default: 'linear']
+    --type TYPE          Either categorical or linear  [default: 'linear']
 """
 import os
 from docopt import docopt
@@ -65,4 +65,4 @@ def validate(model_path=None, tub_names=None, model_type='linear'):
 
 if __name__ == '__main__':
     args = docopt(__doc__)
-    validate(model_path = args['--model'], tub_names = args['--tub'], model_type='linear')
+    validate(model_path=args['--model'], tub_names=args['--tub'], model_type='linear')

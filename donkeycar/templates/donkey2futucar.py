@@ -4,14 +4,14 @@ Scripts to drive a donkey 2 car and train a model for it.
 
 Usage:
     manage.py (drive) [--model=<model>] [--js] [--chaos]
-    manage.py (train) [--tub=<tub1,tub2,..tubn>] [--type=categorical|linear] (--model=<model>) [--base_model=<base_model>] [--no_cache]
+    manage.py (train) [--tub=<tub1,tub2,..tubn>] [--type=(linear|categorical)] (--model=<model>) [--base_model=<base_model>] [--no_cache]
 
 Options:
     -h --help        Show this screen.
     --tub TUBPATHS   List of paths to tubs. Comma separated. Use quotes to use wildcards. ie "~/tubs/*"
     --js             Use physical joystick.
     --chaos          Add periodic random steering when manually driving
-    --type           Either categorical or linear  [default: 'linear']
+    --type TYPE      Either categorical or linear  [default: 'linear']
 """
 import os
 from docopt import docopt
