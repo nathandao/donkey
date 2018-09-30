@@ -46,22 +46,26 @@ def validate(model_path=None, tub_names=None, model_type='linear'):
     X_keys = ['cam/image_array']
     y_keys = ['user/angle', 'user/throttle']
 
+    batch_size = 4
     cross_val_gen, val_gen = tubgroup.get_train_val_gen(X_keys, y_keys,
-                                                    batch_size=1,
+                                                    batch_size=batch_size,
                                                     train_frac=1.0)
     total_records = len(tubgroup.df)
     print('cross validation set size: %d' % total_records)
 
     for (X, Y) in cross_val_gen:
-        #print('size %d' % len(Y))
-        angle = Y[0]
-        throttle = Y[1]
-        print('CORRECT VALUES: angle: ', angle, " and throttle: ", throttle)
-        img = X[0][0]
+        for batch in range(0, batch_size):
+            #print('size %d and next %d', len(Y), len(Y[0]))
+            #print('size %d' % len(X))
 
-        steering_estimate, throttle_estimate = kl.run(img)
-        print('ESTIMATES: angle: ', steering_estimate, " and throttle: ", throttle_estimate)
+            angle = Y[0][batch]
+            throttle = Y[1][batch]
+            print('CORRECT VALUES: angle: ', angle, " and throttle: ", throttle)
+            img = X[0][batch]
 
+            steering_estimate, throttle_estimate = kl.run(img)
+            print('ESTIMATES: angle: ', steering_estimate, " and throttle: ", throttle_estimate)
+        break
 
 if __name__ == '__main__':
     args = docopt(__doc__)
