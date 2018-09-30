@@ -15,16 +15,11 @@ from docopt import docopt
 
 import donkeycar as dk
 
-#import parts
-from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.keras import KerasCategorical, KerasLinear
-from donkeycar.parts.datastore import TubGroup, TubWriter
+from donkeycar.parts.datastore import TubGroup
 
 
 def validate(model_path=None, tub_names=None, model_type='linear'):
-    #path_mask = tub_path + "/*.jpg"
-    #cam = ImageListCamera(path_mask=path_mask)
-
     print("Using a model of type: ", model_type)
     if model_type == "categorical":
         kl = KerasCategorical()
@@ -34,38 +29,25 @@ def validate(model_path=None, tub_names=None, model_type='linear'):
     if model_path:
         kl.load(model_path)
 
-    #index = 0
-    #while index < cam.length():
-    #    index += 1
-    #    frame = cam.run_threaded()
     print('tub_names', tub_names)
-    #if not tub_names:
-    #    tub_names = os.path.join(cfg.DATA_PATH, '*')
     tubgroup = TubGroup(tub_names)
 
-    X_keys = ['cam/image_array']
-    y_keys = ['user/angle', 'user/throttle']
+    # See Also: ShowPredictionPlots
 
-    batch_size = 4
-    cross_val_gen, val_gen = tubgroup.get_train_val_gen(X_keys, y_keys,
-                                                    batch_size=batch_size,
-                                                    train_frac=1.0)
-    total_records = len(tubgroup.df)
-    print('cross validation set size: %d' % total_records)
+    for tub in tubgroup.tubs:
+        num_records = tub.get_num_records()
+        print('cross validation set size: %d' % num_records)
 
-    for (X, Y) in cross_val_gen:
-        for batch in range(0, batch_size):
-            #print('size %d and next %d', len(Y), len(Y[0]))
-            #print('size %d' % len(X))
+        for iRec in tub.get_index(shuffled=False):
+            record = tub.get_record(iRec)
 
-            angle = Y[0][batch]
-            throttle = Y[1][batch]
-            print('CORRECT VALUES: angle: ', angle, " and throttle: ", throttle)
-            img = X[0][batch]
+            img = record["cam/image_array"]
+            user_angle = float(record["user/angle"])
+            user_throttle = float(record["user/throttle"])
+            pilot_angle, pilot_throttle = kl.run(img)
+            print('CORRECT VALUES: angle: ', user_angle, " and throttle: ", user_throttle)
+            print('ESTIMATES:      angle: ', pilot_angle, " and throttle: ", pilot_throttle)
 
-            steering_estimate, throttle_estimate = kl.run(img)
-            print('ESTIMATES: angle: ', steering_estimate, " and throttle: ", throttle_estimate)
-        break
 
 if __name__ == '__main__':
     args = docopt(__doc__)
