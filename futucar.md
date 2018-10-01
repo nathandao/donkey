@@ -2,7 +2,10 @@
 
 These instructions are shortcuts for more general knowledge found in [donkeycar docs](http://docs.donkeycar.com/)
 
-Install the SW stack using those instructions. If using OSX then remember to use newer version of Tensorflow (at least 1.8)
+Install the SW stack using those instructions. If using OSX then remember to use the same version of Tensorflow as in the car (atm ==v 1.8)
+
+Note!! Keras models are NOT compatible between different tensorflow versions!
+
 
 ## Create car
 
