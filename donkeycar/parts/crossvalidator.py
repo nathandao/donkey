@@ -14,9 +14,15 @@ import os
 from docopt import docopt
 
 import donkeycar as dk
-
+import statistics
+import numpy as np
 from donkeycar.parts.keras import KerasCategorical, KerasLinear
 from donkeycar.parts.datastore import TubGroup
+
+
+def print_mean(l, message):
+    means = statistics.mean(l)
+    print(message, " means: ", means)
 
 
 def validate(model_path=None, tub_names=None, model_type='linear'):
@@ -38,6 +44,11 @@ def validate(model_path=None, tub_names=None, model_type='linear'):
         num_records = tub.get_num_records()
         print('cross validation set size: %d' % num_records)
 
+        correct_angles = []
+        correct_throttles = []
+        estimate_angles = []
+        estimate_throttles = []
+
         for iRec in tub.get_index(shuffled=False):
             record = tub.get_record(iRec)
 
@@ -45,8 +56,20 @@ def validate(model_path=None, tub_names=None, model_type='linear'):
             user_angle = float(record["user/angle"])
             user_throttle = float(record["user/throttle"])
             pilot_angle, pilot_throttle = kl.run(img)
-            print('CORRECT VALUES: angle: ', user_angle, " and throttle: ", user_throttle)
-            print('ESTIMATES:      angle: ', pilot_angle, " and throttle: ", pilot_throttle)
+
+            correct_angles.append(user_angle)
+            correct_throttles.append(user_throttle)
+            estimate_angles.append(pilot_angle.item())
+            estimate_throttles.append(pilot_throttle.item())
+
+            #print('CORRECT VALUES: angle: ', user_angle, " and throttle: ", user_throttle)
+            #print('ESTIMATES:      angle: ', pilot_angle, " and throttle: ", pilot_throttle)
+
+        print_mean(correct_angles, "Correct angle")
+        print_mean(estimate_angles, "Estimate angle")
+
+        print_mean(correct_throttles, "Correct throttle")
+        print_mean(estimate_throttles, "Estimate throttle")
 
 
 if __name__ == '__main__':
