@@ -51,4 +51,4 @@ def validate(model_path=None, tub_names=None, model_type='linear'):
 
 if __name__ == '__main__':
     args = docopt(__doc__)
-    validate(model_path=args['--model'], tub_names=args['--tub'], model_type='linear')
+    validate(model_path=args['--model'], tub_names=args['--tub'], model_type=args['--type'])
