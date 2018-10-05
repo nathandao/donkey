@@ -71,7 +71,7 @@ class CreateCar(BaseCommand):
 
         #these are neeeded incase None is passed as path
         path = path or '~/mycar'
-        template = template or 'donkey2'
+        template = template or 'donkey2futucar'
 
 
         print("Creating car folder: {}".format(path))
@@ -259,7 +259,6 @@ class Sim(BaseCommand):
         if args.type == "categorical":
             kl = KerasCategorical()
         elif args.type == "linear":
-            #kl = KerasLinear(num_outputs=2)
             kl = KerasLinear()
         else:
             print("didn't recognice type:", args.type)
@@ -355,6 +354,7 @@ class ShowPredictionPlots(BaseCommand):
         parser.add_argument('tubs', nargs='+', help='paths to tubs')
         parser.add_argument('--model', help='the model to use for predictions')
         parser.add_argument('--config', default='./config.py', help='location of config file to use. default: ./config.py')
+        parser.add_argument('--type', help='the type of the model, linear or categorical')
         parsed_args = parser.parse_args(args)
         return parsed_args
 
@@ -366,21 +366,26 @@ class ShowPredictionPlots(BaseCommand):
         args.tubs = ','.join(args.tubs)
         self.plot_predictions(args.config, args.tubs, args.model)
 
-    def plot_predictions(self, cfg, tub_paths, model_path):
+    def plot_predictions(self, cfg, tub_paths, model_path, model_type='linear'):
         """
         Plot model predictions for angle and throttle against data from tubs.
 
         """
         from donkeycar.parts.datastore import TubGroup
-        from donkeycar.parts.keras import KerasCategorical
+        from donkeycar.parts.keras import KerasCategorical, KerasLinear
+        from matplotlib import pyplot as plt
 
         tg = TubGroup(tub_paths)
 
         model_path = os.path.expanduser(model_path)
-        model = KerasCategorical()
+        if model_type == "categorical":
+            model = KerasCategorical()
+        elif model_type == "linear":
+            model = KerasLinear()
+
         model.load(model_path)
 
-        gen = tg.get_batch_gen(None, None, batch_size=len(tg.df),shuffle=False, df=tg.df)
+        gen = tg.get_batch_gen(None, None, batch_size=len(tg.df), shuffle=False, df=tg.df)
         arr = next(gen)
 
         user_angles = []

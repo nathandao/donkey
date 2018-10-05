@@ -9,7 +9,7 @@ functions to run and train autopilots using keras
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.models import Model, load_model
 from tensorflow.python.keras.layers import Convolution2D
-from tensorflow.python.keras.layers import Dropout, Flatten, Dense, Cropping2D, Lambda
+from tensorflow.python.keras.layers import Dropout, Flatten, Dense, Cropping2D, Lambda, MaxPool2D
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
 
 from donkeycar import util
@@ -58,21 +58,24 @@ class KerasPilot:
             validation_data=val_gen,
             callbacks=callbacks_list,
             validation_steps=steps * (1.0 - train_split) / train_split)
+
         return hist
 
 
 class KerasCategorical(KerasPilot):
     def __init__(self, model=None, *args, **kwargs):
         super(KerasCategorical, self).__init__(*args, **kwargs)
+        self.bin_count = 15  # Default is 15, you can try different values
         if model:
             self.model = model
         else:
-            self.model = default_categorical()
+            self.model = default_categorical(self.bin_count)
+        self.model.summary()
 
     def run(self, img_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
         angle_binned, throttle = self.model.predict(img_arr)
-        angle_unbinned = util.data.linear_unbin(angle_binned[0])
+        angle_unbinned = util.data.linear_unbin(angle_binned[0], self.bin_count)
         return angle_unbinned, throttle[0][0]
 
 
@@ -81,13 +84,11 @@ class KerasLinear(KerasPilot):
         super(KerasLinear, self).__init__(*args, **kwargs)
         if model:
             self.model = model
-        #Fixes from dev branch: TODO cleanup
-        #elif num_outputs is not None:
-        #    self.model = default_n_linear(num_outputs)
-        #else:
-        #    self.model = default_linear()
-        self.model = default_linear()
+        #self.model = default_linear()
+        #self.model = futucar_model()
+        self.model = default_n_linear(2)
 
+        self.model.summary()
     def run(self, img_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
         outputs = self.model.predict(img_arr)
@@ -97,7 +98,7 @@ class KerasLinear(KerasPilot):
         return steering[0][0], throttle[0][0]
 
 
-def default_categorical():
+def default_categorical(bin_count=15):
     img_in = Input(shape=(120, 160, 3),
                    name='img_in')  # First layer, input layer, Shape comes from camera.py resolution, RGB
     x = img_in
@@ -120,8 +121,8 @@ def default_categorical():
     x = Dense(50, activation='relu')(x)  # Classify the data into 50 features, make all negatives 0
     x = Dropout(.1)(x)  # Randomly drop out 10% of the neurons (Prevent overfitting)
     # categorical output of the angle
-    angle_out = Dense(15, activation='softmax', name='angle_out')(
-        x)  # Connect every input with every output and output 15 hidden units. Use Softmax to give percentage. 15 categories and find best one based off percentage 0.0-1.0
+    angle_out = Dense(bin_count, activation='softmax', name='angle_out')(
+        x)  # Connect every input with every output and output to N(default15) hidden units. Use Softmax to give percentage. N categories and find best one based off percentage 0.0-1.0
 
     # continous output of throttle
     throttle_out = Dense(1, activation='relu', name='throttle_out')(x)  # Reduce to 1 number, Positive number only
@@ -249,6 +250,38 @@ def default_linear():
                   loss={'angle_out': 'mean_squared_error',
                         'throttle_out': 'mean_squared_error'},
                   loss_weights={'angle_out': 0.5, 'throttle_out': .5})
+
+    return model
+
+def futucar_model():
+    img_in = Input(shape=(120, 160, 3), name='img_in')
+    x = img_in
+
+    # Convolution2D class name is an alias for Conv2D
+    x = Convolution2D(filters=24, kernel_size=(5, 5), strides=(2, 2), activation='relu')(x)
+    x = Convolution2D(filters=32, kernel_size=(5, 5), strides=(2, 2), activation='relu')(x)
+    x = Convolution2D(filters=64, kernel_size=(5, 5), strides=(2, 2), activation='relu')(x)
+    x = Dropout(rate=.1)(x)
+    x = Convolution2D(filters=64, kernel_size=(3, 3), strides=(2, 2), activation='relu')(x)
+    x = Convolution2D(filters=64, kernel_size=(3, 3), strides=(1, 1), activation='relu')(x)
+
+    x = Flatten(name='flattened')(x)
+    x = Dense(units=100, activation='linear')(x)
+    x = Dropout(rate=.1)(x)
+    x = Dense(units=50, activation='linear')(x)
+    x = Dropout(rate=.1)(x)
+    # categorical output of the angle
+    angle_out = Dense(units=1, activation='linear', name='angle_out')(x)
+
+    # continous output of throttle
+    throttle_out = Dense(units=1, activation='linear', name='throttle_out')(x)
+
+    model = Model(inputs=[img_in], outputs=[angle_out, throttle_out])
+
+    model.compile(optimizer='adam',
+                  loss={'angle_out': 'mean_squared_error',
+                        'throttle_out': 'mean_squared_error'},
+                  loss_weights={'angle_out': 0.8, 'throttle_out': 0.2})
 
     return model
 

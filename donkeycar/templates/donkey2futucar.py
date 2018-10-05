@@ -4,13 +4,14 @@ Scripts to drive a donkey 2 car and train a model for it.
 
 Usage:
     manage.py (drive) [--model=<model>] [--js] [--chaos]
-    manage.py (train) [--tub=<tub1,tub2,..tubn>]  [--type=categorical|linear] (--model=<model>) [--base_model=<base_model>] [--no_cache]
+    manage.py (train) [--tub=<tub1,tub2,..tubn>] [--type=(linear|categorical)] (--model=<model>) [--base_model=<base_model>] [--no_cache]
 
 Options:
     -h --help        Show this screen.
     --tub TUBPATHS   List of paths to tubs. Comma separated. Use quotes to use wildcards. ie "~/tubs/*"
     --js             Use physical joystick.
     --chaos          Add periodic random steering when manually driving
+    --type TYPE      Either categorical or linear  [default: 'linear']
 """
 import os
 from docopt import docopt
@@ -27,7 +28,7 @@ from donkeycar.parts.controller import LocalWebController, JoystickController
 from donkeycar.parts.clock import Timestamp
 
 
-def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
+def drive(cfg, model_path=None, use_joystick=False, use_chaos=False, model_type='linear'):
     """
     Construct a working robotic vehicle from many parts.
     Each part runs as a job in the Vehicle loop, calling either
@@ -73,7 +74,12 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
                                 outputs=['run_pilot'])
 
     # Run the pilot if the mode is not user.
-    kl = KerasCategorical()
+    print("Using a model of type: ", model_type)
+    if model_type == "categorical":
+        kl = KerasCategorical()
+    elif model_type == "linear":
+        kl = KerasLinear()
+    
     if model_path:
         kl.load(model_path)
 
@@ -132,7 +138,6 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
 
 
 def train(cfg, tub_names, new_model_path, base_model_path=None, modelType="linear"):
-    # TODO add modelType-option also to drive-mode
     print("Train a model of type: ", modelType)
 
     if modelType == "categorical":
@@ -189,16 +194,6 @@ def train_categorical(cfg, tub_names, new_model_path, base_model_path=None):
     """
     X_keys = ['cam/image_array']
     y_keys = ['user/angle', 'user/throttle']
-    def train_record_transform(record):
-        """ convert categorical steering to linear and apply image augmentations """
-        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
-        # TODO add augmentation that doesn't use opencv
-        return record
-
-    def val_record_transform(record):
-        """ convert categorical steering to linear """
-        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
-        return record
 
     new_model_path = os.path.expanduser(new_model_path)
 
@@ -207,6 +202,17 @@ def train_categorical(cfg, tub_names, new_model_path, base_model_path=None):
     if base_model_path is not None:
         base_model_path = os.path.expanduser(base_model_path)
         kl.load(base_model_path)
+
+    def train_record_transform(record):
+        """ convert categorical steering to linear and apply image augmentations """
+        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'], kl.bin_count)
+        # TODO add augmentation that doesn't use opencv
+        return record
+
+    def val_record_transform(record):
+        """ convert categorical steering to linear """
+        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'], kl.bin_count)
+        return record
 
     print('tub_names', tub_names)
     if not tub_names:
@@ -237,7 +243,7 @@ if __name__ == '__main__':
     cfg = dk.load_config()
 
     if args['drive']:
-        drive(cfg, model_path = args['--model'], use_joystick=args['--js'], use_chaos=args['--chaos'])
+        drive(cfg, model_path = args['--model'], use_joystick=args['--js'], use_chaos=args['--chaos'], model_type=args['--type'])
 
     elif args['train']:
         tub = args['--tub']

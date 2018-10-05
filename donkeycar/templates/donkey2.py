@@ -140,16 +140,6 @@ def train(cfg, tub_names, new_model_path, base_model_path=None ):
     """
     X_keys = ['cam/image_array']
     y_keys = ['user/angle', 'user/throttle']
-    def train_record_transform(record):
-        """ convert categorical steering to linear and apply image augmentations """
-        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
-        # TODO add augmentation that doesn't use opencv
-        return record
-
-    def val_record_transform(record):
-        """ convert categorical steering to linear """
-        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
-        return record
 
     new_model_path = os.path.expanduser(new_model_path)
 
@@ -157,6 +147,17 @@ def train(cfg, tub_names, new_model_path, base_model_path=None ):
     if base_model_path is not None:
         base_model_path = os.path.expanduser(base_model_path)
         kl.load(base_model_path)
+
+    def train_record_transform(record):
+        """ convert categorical steering to linear and apply image augmentations """
+        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'], kl.bin_count)
+        # TODO add augmentation that doesn't use opencv
+        return record
+
+    def val_record_transform(record):
+        """ convert categorical steering to linear """
+        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'], kl.bin_count)
+        return record
 
     print('tub_names', tub_names)
     if not tub_names:
