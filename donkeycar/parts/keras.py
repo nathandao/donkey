@@ -65,15 +65,17 @@ class KerasPilot:
 class KerasCategorical(KerasPilot):
     def __init__(self, model=None, *args, **kwargs):
         super(KerasCategorical, self).__init__(*args, **kwargs)
+        self.bin_count = 15  # Default is 15, you can try different values
         if model:
             self.model = model
         else:
-            self.model = default_categorical()
+            self.model = default_categorical(self.bin_count)
+        self.model.summary()
 
     def run(self, img_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
         angle_binned, throttle = self.model.predict(img_arr)
-        angle_unbinned = util.data.linear_unbin(angle_binned[0])
+        angle_unbinned = util.data.linear_unbin(angle_binned[0], self.bin_count)
         return angle_unbinned, throttle[0][0]
 
 
@@ -100,7 +102,7 @@ class KerasLinear(KerasPilot):
         return steering[0][0], throttle[0][0]
 
 
-def default_categorical():
+def default_categorical(bin_count=15):
     img_in = Input(shape=(120, 160, 3),
                    name='img_in')  # First layer, input layer, Shape comes from camera.py resolution, RGB
     x = img_in
@@ -123,8 +125,8 @@ def default_categorical():
     x = Dense(50, activation='relu')(x)  # Classify the data into 50 features, make all negatives 0
     x = Dropout(.1)(x)  # Randomly drop out 10% of the neurons (Prevent overfitting)
     # categorical output of the angle
-    angle_out = Dense(15, activation='softmax', name='angle_out')(
-        x)  # Connect every input with every output and output 15 hidden units. Use Softmax to give percentage. 15 categories and find best one based off percentage 0.0-1.0
+    angle_out = Dense(bin_count, activation='softmax', name='angle_out')(
+        x)  # Connect every input with every output and output to N(default15) hidden units. Use Softmax to give percentage. N categories and find best one based off percentage 0.0-1.0
 
     # continous output of throttle
     throttle_out = Dense(1, activation='relu', name='throttle_out')(x)  # Reduce to 1 number, Positive number only

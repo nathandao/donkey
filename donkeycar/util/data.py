@@ -5,7 +5,7 @@ import numpy as np
 import itertools
 
 
-def linear_bin(a):
+def linear_bin(a, bin_count=15):
     """
     Convert a value to a categorical array.
 
@@ -13,6 +13,7 @@ def linear_bin(a):
     ----------
     a : int or float
         A value between -1 and 1
+    bin_count : number of bins, default is 15
 
     Returns
     -------
@@ -20,13 +21,13 @@ def linear_bin(a):
         A list of length 15 with one item set to 1, which represents the linear value, and all other items set to 0.
     """
     a = a + 1
-    b = round(a / (2 / 14))
-    arr = np.zeros(15)
+    b = round(a / (2 / (bin_count-1)))
+    arr = np.zeros(bin_count)
     arr[int(b)] = 1
     return arr
 
 
-def linear_unbin(arr):
+def linear_unbin(arr, bin_count=15):
     """
     Convert a categorical array to value.
 
@@ -34,10 +35,10 @@ def linear_unbin(arr):
     --------
     linear_bin
     """
-    if not len(arr) == 15:
-        raise ValueError('Illegal array length, must be 15')
+    if not len(arr) == bin_count:
+        raise ValueError('Illegal array length, must be ', bin_count)
     b = np.argmax(arr)
-    a = b * (2 / 14) - 1
+    a = b * (2 / (bin_count-1)) - 1
     return a
 
 
