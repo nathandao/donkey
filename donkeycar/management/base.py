@@ -71,7 +71,7 @@ class CreateCar(BaseCommand):
 
         #these are neeeded incase None is passed as path
         path = path or '~/mycar'
-        template = template or 'donkey2'
+        template = template or 'donkey2futucar'
 
 
         print("Creating car folder: {}".format(path))
