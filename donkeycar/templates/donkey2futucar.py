@@ -79,8 +79,7 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False, model_type=
         kl = KerasCategorical()
     elif model_type == "linear":
         kl = KerasLinear()
-    #kl = KerasCategorical()
-
+    
     if model_path:
         kl.load(model_path)
 

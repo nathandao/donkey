@@ -259,7 +259,6 @@ class Sim(BaseCommand):
         if args.type == "categorical":
             kl = KerasCategorical()
         elif args.type == "linear":
-            #kl = KerasLinear(num_outputs=2)
             kl = KerasLinear()
         else:
             print("didn't recognice type:", args.type)
@@ -384,11 +383,10 @@ class ShowPredictionPlots(BaseCommand):
         elif model_type == "linear":
             model = KerasLinear()
 
-        #model = KerasCategorical()
         model.load(model_path)
 
-        #gen = tg.get_batch_gen(None, None, batch_size=len(tg.df), shuffle=False, df=tg.df)
-        #arr = next(gen)
+        gen = tg.get_batch_gen(None, None, batch_size=len(tg.df), shuffle=False, df=tg.df)
+        arr = next(gen)
 
         user_angles = []
         user_throttles = []
