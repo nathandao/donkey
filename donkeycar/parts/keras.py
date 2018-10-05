@@ -91,7 +91,9 @@ class KerasLinear(KerasPilot):
         #    self.model = default_linear()
 
         #self.model = default_linear()
-        self.model = futucar_model()
+        #self.model = futucar_model()
+        self.model = default_n_linear(2)
+
         self.model.summary()
     def run(self, img_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
