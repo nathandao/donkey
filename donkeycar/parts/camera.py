@@ -21,6 +21,10 @@ class PiCamera(BaseCamera):
         self.rawCapture = PiRGBArray(self.camera, size=resolution)
         self.stream = self.camera.capture_continuous(self.rawCapture,
             format="rgb", use_video_port=True)
+        self.camera.awb_mode = 'off'
+        self.camera.awb_gains = 1.6
+        self.camera.brightness = 55
+
 
         # initialize the frame and the variable used to indicate
         # if the thread should be stopped
