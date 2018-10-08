@@ -66,10 +66,13 @@ def blend_using_mask(img, img_mask):
 
 print(cv2.__version__)
 
-# Load an color image in grayscale
-img = cv2.imread('/Users/mpaa/donkey-data/data/simulator/test.jpg', 0)
+#img_path = '/Users/mpaa/donkey-data/data/simulator/log/3404_cam-image_array_.jpg'
+img_path = '/Users/mpaa/donkey-data/data/7th-set1/404_cam-image_array_.jpg'
 
-color_img = cv2.imread('/Users/mpaa/donkey-data/data/simulator/test.jpg', cv2.IMREAD_COLOR)
+# Load an color image in grayscale
+img = cv2.imread(img_path, 0)
+
+color_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
 #Matplotlib uses brg so color transformation is needed
 RGB_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
 
@@ -79,6 +82,9 @@ RGB_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
 
 mask = plot_canny(img)
 blend_using_mask(RGB_img, mask)
+
+# TODO try this also https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
+
 
 #plot_sobel(img)
 
