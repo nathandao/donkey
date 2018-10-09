@@ -2,6 +2,55 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
+from PIL import Image
+
+
+class PreProcessor:
+    def __init__(self, image=None):
+        #We could initialize some variables based on a single snapshot, fex size, thresholds, etc
+        #if image is not None:
+
+        # TODO init min_val and max_val from somewhere
+
+        self.morph_kernel = np.ones((9, 9), np.uint8)
+        self.canny_min = 100
+        self.canny_max = 200
+
+    # Input: Image
+    # Output: Image
+    def run(self, img_arr, width=None, height=None):
+        #TODO add cropping before edge detect
+        edges = cv2.Canny(img_arr, self.canny_min, self.canny_max)
+        closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, self.morph_kernel)
+
+        ret, mask = cv2.threshold(closed, 10, 255, cv2.THRESH_BINARY)
+        output = cv2.bitwise_and(img_arr, img_arr, mask=mask)
+
+        return output
+
+    def update(self):
+        pass
+
+    def shutdown(self):
+        pass
+
+
+class Tester:
+
+    def __init__(self):
+        self.processor = PreProcessor()
+
+
+    def process_and_save(self, img_path, new_path):
+        # load objects that were saved as separate files
+        img = Image.open(img_path)
+        width, height = img.size
+        print("w: ", width, " h:", height)
+        arr = np.array(img)
+        processed = self.processor.run(arr, width, height)
+        saveable = Image.fromarray(np.uint8(processed))
+        saveable.save(new_path)
+
 
 def plot_sobel(img):
     laplacian = cv2.Laplacian(img, cv2.CV_64F)
@@ -21,7 +70,7 @@ def plot_sobel(img):
 
 
 def plot_canny(img):
-    edges = cv2.Canny(img, 100, 200)
+    edges = cv2.Canny(img, 100, 200) # TODO read min_val and max_val from somewhere
 
     plt.subplot(2, 2, 1), plt.imshow(img, cmap='gray')
     plt.title('Original Image'), plt.xticks([]), plt.yticks([])
@@ -64,28 +113,26 @@ def blend_using_mask(img, img_mask):
     plt.title('Blended'), plt.xticks([]), plt.yticks([])
     plt.show()
 
-print(cv2.__version__)
+def plot(img_path):
+    # Load an color image in grayscale
+    img = cv2.imread(img_path, 0)
 
-#img_path = '/Users/mpaa/donkey-data/data/simulator/log/3404_cam-image_array_.jpg'
-img_path = '/Users/mpaa/donkey-data/data/7th-set1/404_cam-image_array_.jpg'
+    color_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+    # Matplotlib uses brg so color transformation is needed
+    RGB_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
+    mask = plot_canny(img)
+    blend_using_mask(RGB_img, mask)
 
-# Load an color image in grayscale
-img = cv2.imread(img_path, 0)
-
-color_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
-#Matplotlib uses brg so color transformation is needed
-RGB_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
-
-#cv2.imshow('donkey',img)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
-
-mask = plot_canny(img)
-blend_using_mask(RGB_img, mask)
-
-# TODO try this also https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
+    # TODO try this also https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
 
 
-#plot_sobel(img)
+if __name__ == '__main__':
+    print(cv2.__version__)
 
-#img = cv2.imread('dave.jpg',0)
+    #img_path = '/Users/mpaa/donkey-data/data/simulator/log/3404_cam-image_array_.jpg'
+    img_path = '/Users/mpaa/donkey-data/data/data-7th/7th-set1/104_cam-image_array_.jpg'
+
+    test = Tester()
+    test.process_and_save(img_path, "/Users/mpaa/test.jpg")
+
+    plot(img_path)
