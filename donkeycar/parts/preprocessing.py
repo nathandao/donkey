@@ -6,19 +6,16 @@ from PIL import Image
 
 
 class PreProcessor:
-    def __init__(self, image=None):
+    def __init__(self, kernel_size=9, image=None):
         #We could initialize some variables based on a single snapshot, fex size, thresholds, etc
-        #if image is not None:
-
         # TODO init min_val and max_val from somewhere
-
-        self.morph_kernel = np.ones((9, 9), np.uint8)
+        self.morph_kernel = np.ones((kernel_size, kernel_size), np.uint8)
         self.canny_min = 100
         self.canny_max = 200
 
     # Input: Image
     # Output: Image
-    def run(self, img_arr, width=None, height=None):
+    def run(self, img_arr):
         #TODO add cropping before edge detect
         edges = cv2.Canny(img_arr, self.canny_min, self.canny_max)
         closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, self.morph_kernel)
@@ -40,16 +37,28 @@ class Tester:
     def __init__(self):
         self.processor = PreProcessor()
 
-
     def process_and_save(self, img_path, new_path):
         # load objects that were saved as separate files
         img = Image.open(img_path)
         width, height = img.size
         print("w: ", width, " h:", height)
         arr = np.array(img)
-        processed = self.processor.run(arr, width, height)
+        processed = self.processor.run(arr)
         saveable = Image.fromarray(np.uint8(processed))
         saveable.save(new_path)
+
+    def process_and_plot(self, img_path):
+        img = Image.open(img_path)
+        arr = np.array(img)
+        processed = self.processor.run(arr)
+
+        plt.subplot(2, 2, 1), plt.imshow(arr, cmap='gray')
+        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+
+        plt.subplot(2, 2, 2), plt.imshow(processed, cmap='gray')
+        plt.title('Processed Image'), plt.xticks([]), plt.yticks([])
+
+        plt.show()
 
 
 def plot_sobel(img):
@@ -127,12 +136,11 @@ def plot(img_path):
 
 
 if __name__ == '__main__':
-    print(cv2.__version__)
+    print("using opencv: ", cv2.__version__)
 
     #img_path = '/Users/mpaa/donkey-data/data/simulator/log/3404_cam-image_array_.jpg'
-    img_path = '/Users/mpaa/donkey-data/data/data-7th/7th-set1/104_cam-image_array_.jpg'
+    img_path = '/Users/mpaa/donkey-data/data/data-7th/7th-set1/1164_cam-image_array_.jpg'
 
     test = Tester()
-    test.process_and_save(img_path, "/Users/mpaa/test.jpg")
-
-    plot(img_path)
+    #test.process_and_save(img_path, "/Users/mpaa/test.jpg")
+    test.process_and_plot(img_path)
