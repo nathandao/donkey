@@ -1,27 +1,34 @@
 import numpy as np
 import cv2
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 
 from PIL import Image
 
 
 class PreProcessor:
-    def __init__(self, kernel_size=9, image=None):
+    def __init__(self, kernel_size=9, blend_colors=True, image=None):
         #We could initialize some variables based on a single snapshot, fex size, thresholds, etc
         # TODO init min_val and max_val from somewhere
         self.morph_kernel = np.ones((kernel_size, kernel_size), np.uint8)
         self.canny_min = 100
         self.canny_max = 200
+        self.blend_colors = blend_colors
 
     # Input: Image
     # Output: Image
     def run(self, img_arr):
         #TODO add cropping before edge detect
+
+        # TODO try this also https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
+
         edges = cv2.Canny(img_arr, self.canny_min, self.canny_max)
         closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, self.morph_kernel)
 
         ret, mask = cv2.threshold(closed, 10, 255, cv2.THRESH_BINARY)
-        output = cv2.bitwise_and(img_arr, img_arr, mask=mask)
+        if self.blend_colors:
+            output = cv2.bitwise_and(img_arr, img_arr, mask=mask)
+        else:
+            output = mask
 
         return output
 
@@ -35,7 +42,7 @@ class PreProcessor:
 class Tester:
 
     def __init__(self):
-        self.processor = PreProcessor()
+        self.processor = PreProcessor(blend_colors=True)
 
     def process_and_save(self, img_path, new_path):
         # load objects that were saved as separate files
@@ -47,7 +54,7 @@ class Tester:
         saveable = Image.fromarray(np.uint8(processed))
         saveable.save(new_path)
 
-    def process_and_plot(self, img_path):
+    '''def process_and_plot(self, img_path):
         img = Image.open(img_path)
         arr = np.array(img)
         processed = self.processor.run(arr)
@@ -132,8 +139,7 @@ def plot(img_path):
     mask = plot_canny(img)
     blend_using_mask(RGB_img, mask)
 
-    # TODO try this also https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
-
+    '''
 
 if __name__ == '__main__':
     print("using opencv: ", cv2.__version__)
@@ -142,5 +148,5 @@ if __name__ == '__main__':
     img_path = '/Users/mpaa/donkey-data/data/data-7th/7th-set1/1164_cam-image_array_.jpg'
 
     test = Tester()
-    #test.process_and_save(img_path, "/Users/mpaa/test.jpg")
-    test.process_and_plot(img_path)
+    test.process_and_save(img_path, "/Users/mpaa/test.jpg")
+    #test.process_and_plot(img_path)
