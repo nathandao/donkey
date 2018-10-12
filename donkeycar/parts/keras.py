@@ -13,7 +13,7 @@ from tensorflow.python.keras.layers import Dropout, Flatten, Dense, Cropping2D, 
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
 
 from donkeycar import util
-
+from donkeycar.parts.preprocessing import PreProcessor
 
 class KerasPilot:
 
@@ -80,16 +80,26 @@ class KerasCategorical(KerasPilot):
 
 
 class KerasLinear(KerasPilot):
-    def __init__(self, model=None, num_outputs=None, *args, **kwargs):
+    def __init__(self, model=None, num_outputs=None, pre_process=True, *args, **kwargs):
         super(KerasLinear, self).__init__(*args, **kwargs)
         if model:
             self.model = model
+
+        if pre_process:
+            print('Using preprocessor')
+            self.preprocessor = PreProcessor()
+
         #self.model = default_linear()
         #self.model = futucar_model()
         self.model = default_n_linear(2)
 
         self.model.summary()
     def run(self, img_arr):
+        #TODO deploy this as Vehicle.part, not as argument to the model.
+        # This is just for quick testing
+        if self.preprocessor:
+            img_arr = self.preprocessor.run(img_arr)
+
         img_arr = img_arr.reshape((1,) + img_arr.shape)
         outputs = self.model.predict(img_arr)
         # print(len(outputs), outputs)

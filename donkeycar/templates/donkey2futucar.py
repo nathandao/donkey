@@ -165,11 +165,17 @@ def train_linear(cfg, tub_names, new_model_path, base_model_path=None):
         base_model_path = os.path.expanduser(base_model_path)
         kl.load(base_model_path)
 
+    def train_img_transform(record):
+        record['cam/image_array'] = kl.preprocessor.run(record['cam/image_array'])
+        return record
+
     print('tub_names', tub_names)
     if not tub_names:
         tub_names = os.path.join(cfg.DATA_PATH, '*')
     tubgroup = TubGroup(tub_names)
     train_gen, val_gen = tubgroup.get_train_val_gen(X_keys, y_keys,
+                                                    train_record_transform=train_img_transform,
+                                                    val_record_transform=train_img_transform,
                                                     batch_size=cfg.BATCH_SIZE,
                                                     train_frac=cfg.TRAIN_TEST_SPLIT)
 
