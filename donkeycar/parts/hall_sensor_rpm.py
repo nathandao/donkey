@@ -34,21 +34,20 @@ class HallSensorRpm:
             if(self.debug):
                 print('seconds:', self.elapsed)
                 print('distance:', self.dist_meas)
-                print('velocity:', self.km_per_hour)
+                print('velocity:', self.m_per_sec)
             sleep(0.1)
 
     def calculate_speed(self):
         if self.elapse !=0:
             self.rpm = 1/elapse * 60
             self.circ_cm = 2 * math.pi * self.wheel_radius
-            self.dist_km = circ_cm/100000
-            self.km_per_sec = dist_km / elapse
-            self.km_per_hour = km_per_sec * 3600
-            self.dist_meas = (dist_km*pulse)*1000
-            return km_per_hour
+            self.dist_m = circ_cm/100
+            self.m_per_sec = dist_m / elapse
+            self.dist_meas = (dist_m*pulse)*1000
+            return self.m_per_sec
 
     def run_threaded(self):
-        return self.dist_meas, self.km_per_hour
+        return self.dist_meas, self.m_per_sec
 
     def shutdown(self):
         # indicate that the thread should be stopped
