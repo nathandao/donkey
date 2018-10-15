@@ -26,6 +26,7 @@ from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.datastore import TubGroup, TubWriter
 from donkeycar.parts.controller import LocalWebController, JoystickController
 from donkeycar.parts.clock import Timestamp
+from donkeycar.parts.hall_sensor_rpm import HallSensorRpm
 
 
 def drive(cfg, model_path=None, use_joystick=False, use_chaos=False, model_type='linear'):
@@ -79,7 +80,7 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False, model_type=
         kl = KerasCategorical()
     elif model_type == "linear":
         kl = KerasLinear()
-    
+
     if model_path:
         kl.load(model_path)
 
@@ -131,6 +132,10 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False, model_type=
     # single tub
     tub = TubWriter(path=cfg.TUB_PATH, inputs=inputs, types=types)
     V.add(tub, inputs=inputs, run_condition='recording')
+
+    # hall sensor rpm
+    rpm_sensor = HallSensorRpm(sensor = 17, wheel_radius = 33)
+    V.add(rpm_sensor, inputs=['speed'], run_condition='recording')
 
     # run the vehicle
     V.start(rate_hz=cfg.DRIVE_LOOP_HZ,
@@ -252,8 +257,3 @@ if __name__ == '__main__':
         cache = not args['--no_cache']
         modelType = args['--type']
         train(cfg, tub, new_model_path, base_model_path, modelType)
-
-
-
-
-
